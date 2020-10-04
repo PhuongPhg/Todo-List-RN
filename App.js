@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { ScrollView, StyleSheet, Text, View, Alert, TextInput, ImageBackground, KeyboardAvoidingView } from 'react-native';
 import Constants from "expo-constants";
 import { TouchableOpacity } from "react-native-gesture-handler";
-import { createStackNavigator, Header } from "@react-navigation/stack";
+import { createStackNavigator, Header, CardStyleInterpolators,} from "@react-navigation/stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { NavigationContainer } from '@react-navigation/native';
 import { AntDesign } from "@expo/vector-icons";
@@ -13,16 +13,10 @@ import SingleTodoScreen from './SingleTodoScreen';
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
-
-const Active = () => {
-  return (
-    <Text>Active</Text>
-  );
-};
 const routeIcon = {
-  Complete: "downcircleo",
-  AllStack: "menufold",
-  Active: "smileo",
+  Complete: "smileo",
+  All: "menufold",
+  Active: "meh",
 };
 
 const TodoItem = (props) => {
@@ -93,15 +87,19 @@ export default function App() {
 
   const SingleTodoScreen = ({route}) => {
     return (
-      <View style={styles.container}>
-        <Text>{route.params?.id}. {route.params?.status}</Text>
-        <Text>{route.params?.body}</Text>
+      <View style={styles.singleTodo}>
+        <Text style={{fontSize: 20}}>{route.params?.id}. {route.params?.status}</Text>
+        <Text style={{fontSize: 25, fontWeight: 'bold', textAlign:'center'}}>{route.params?.body}</Text>
       </View>
     );
   };
   const CompleteStack = () => {
     return (
-      <Stack.Navigator initialRouteName="Complete">
+      <Stack.Navigator initialRouteName="Complete"
+      screenOptions={{
+      cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS
+    }}
+      >
         <Stack.Screen name="Complete" component={Complete} />
         <Stack.Screen name="SingleTodoScreen" component={SingleTodoScreen} />
       </Stack.Navigator>
@@ -136,6 +134,43 @@ export default function App() {
     );
   };
   
+  const ActiveStack= () => {
+    return (
+      <Stack.Navigator initialRouteName="Active">
+        <Stack.Screen name="Activve" component={Active} />
+        <Stack.Screen name="SingleTodoScreen" component={SingleTodoScreen} />
+      </Stack.Navigator>
+    );
+  };
+
+  const Active = ({navigation}) => {
+    const showTodo = todo => {
+      navigation.navigate("SingleTodoScreen", todo);
+      console.log("show me pls");
+    }
+    return (
+      <ImageBackground style={styles.imgBack} 
+      resizeMode='cover'
+        source={require('./assets/1.jpg')}
+      >
+        <ScrollView >
+          <View style={styles.container}>
+          <View style={{width: '90%'}}>
+          {todoList.map((todo, idx) => {
+            if(todo.status=="Active"){
+              return (<TodoItem key={todo.body} todo={todo} idx={idx} 
+                onToggleTodo={onToggleTodo} onDeleteTodo={onDeleteTodo}
+                showTodo={showTodo}
+                />)
+            }
+          })}
+          </View>
+          </View>
+        </ScrollView>
+      </ImageBackground>
+    );
+  };
+
   const AllStack = () => {
     return (
       <Stack.Navigator initialRouteName="All">
@@ -177,7 +212,7 @@ export default function App() {
             value={todoBody}
             style={styles.todoInput}
             onChangeText={text =>setTodoBody(text)}
-            placeholder="Type here!"
+            // placeholder="Type here!"
           />
           <TouchableOpacity style={styles.buttonSubmit} onPress={onSubmitTodo}>
             <Text style={{color: 'white', fontWeight: 'bold', fontSize: 18}}>Submit</Text>
@@ -192,8 +227,8 @@ export default function App() {
     );
   };
   return (
-    <NavigationContainer>
-      <Tab.Navigator
+    <NavigationContainer initialRouteName="All">
+      <Tab.Navigator 
       screenOptions={({route})=>({
         tabBarIcon: ({focused}) => (
           <AntDesign
@@ -201,10 +236,15 @@ export default function App() {
           size={24}
           color={focused ? "#aa4a30":"grey"}/>
         ),
-      })}>
+      })}
+      tabBarOptions={{
+        activeTintColor: '#aa4a30',
+        inactiveTintColor: 'gray',
+      }}
+      >
         <Tab.Screen name="Complete" component={CompleteStack}/>
-        <Tab.Screen name="AllStack" component={AllStack}/>
-        <Tab.Screen name="Active" component={Active}/>
+        <Tab.Screen name="All" component={AllStack}/>
+        <Tab.Screen name="Active" component={ActiveStack}/>
       </Tab.Navigator>
     </NavigationContainer>
   );
@@ -266,4 +306,12 @@ const styles = StyleSheet.create({
     width: '100%',
     height:'100%',
   },
+  singleTodo:{
+    flex: 1,
+    alignItems:'center',
+    marginTop: Constants.statusBarHeight,
+    fontSize: 20,
+    justifyContent: 'center',
+    flexDirection: 'column',
+  }
 });
